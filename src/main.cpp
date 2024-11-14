@@ -23,9 +23,10 @@ static void BM_GlobalMem(benchmark::State &state) {
   });
 
   /* Data setup */
-  auto buffer = sycl::malloc_device<real_t>(n1 * n2, q);
+  auto buffer = sycl::malloc_shared<real_t>(n1 * n2, q);
   fill(q, buffer, params).wait();
-  auto scratch = sycl::malloc_device<real_t>(n1 * n2, q);
+  auto scratch = sycl::malloc_shared<real_t>(n1 * n2, q);
+  q.wait();
 
   /* Benchmark */
   for (auto _ : state) {
@@ -80,8 +81,9 @@ static void BM_LocalMem(benchmark::State &state) {
   });
 
   /* Data setup */
-  auto buffer = sycl::malloc_device<real_t>(n1 * n2, q);
+  auto buffer = sycl::malloc_shared<real_t>(n1 * n2, q);
   fill(q, buffer, params).wait();
+  q.wait();
 
   /* Benchmark */
   for (auto _ : state) {

@@ -37,7 +37,7 @@ inline sycl::event fill(sycl::queue &q, real_t *buffer, Params &p) {
 
       mdspan2d_t data(buffer, n1, n2);
 
-      data(i, j) = i + j % j;
+      data(i, j) = i * j;
     }); // end parallel_for
   });   // end q.submit
 }
