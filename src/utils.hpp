@@ -10,6 +10,8 @@ using mdspan2d_t =
     std::experimental::mdspan<real_t, std::experimental::dextents<size_t, 2>,
                               std::experimental::layout_right>;
 
+constexpr auto W = 128;
+
 struct Params {
   size_t n1_, n2_;
 
@@ -24,7 +26,7 @@ inline sycl::event fill(sycl::queue &q, real_t *buffer, Params &p) {
   auto n2 = p.n2_;
 
   const sycl::range global_size{n1, n2};
-  const sycl::range local_size{1, 128};
+  const sycl::range local_size{1, W};
 
   const sycl::nd_range ndr(global_size, local_size);
 
@@ -47,7 +49,7 @@ inline real_t validate(sycl::queue &q, real_t *buffer, Params &p) {
   auto n2 = p.n2_;
 
   const sycl::range global_size{n1, n2};
-  const sycl::range local_size{1, 128};
+  const sycl::range local_size{1, W};
   const sycl::nd_range ndr(global_size, local_size);
 
   real_t errorL1 = 0.0;

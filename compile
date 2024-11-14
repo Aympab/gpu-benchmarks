@@ -20,6 +20,10 @@ usage() {
     exit 1
 }
 
+#If no argument, build google benchmark directly and build the project after
+#if [[ $# -eq 0 ]]
+#fi
+
 # =================================================
 # Argument parsing
 # =================================================

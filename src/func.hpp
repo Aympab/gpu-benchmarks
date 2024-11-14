@@ -1,19 +1,19 @@
 #pragma once
 #include "utils.hpp"
-#include <hipSYCL/sycl/libkernel/group_functions.hpp>
-#include <hipSYCL/sycl/sycl.hpp>
+#include <cstddef>
 
 static constexpr auto num_error = 10e-14;
 
 //==============================================================================
 //==============================================================================
 /* Solve with local accessor */
-inline sycl::event solveLocal(sycl::queue &q, real_t *buffer, const Params &p) {
+inline sycl::event solveLocal(sycl::queue &q, real_t *buffer, const Params &p,
+                              const size_t w1, const size_t w2) {
   auto n1 = p.n1_;
   auto n2 = p.n2_;
 
   const sycl::range global_size{n1, n2};
-  const sycl::range local_size{1, 128};
+  const sycl::range local_size{w1, w2};
 
   const sycl::nd_range ndr(global_size, local_size);
 
@@ -50,7 +50,7 @@ inline sycl::event solveGlobal(sycl::queue &q, real_t *buffer, real_t *scr,
   auto n2 = p.n2_;
 
   const sycl::range global_size{n1, n2};
-  const sycl::range local_size{1, 128};
+  const sycl::range local_size{1, W};
 
   const sycl::nd_range ndr(global_size, local_size);
 

@@ -1,6 +1,10 @@
 #include "func.hpp"
 #include <hipSYCL/sycl/usm.hpp>
 
+using bm_vec_t = std::vector<int64_t>;
+static bm_vec_t N1_RANGE = {1024, 2048, 4096};
+static bm_vec_t N2_RANGE = {128, 256, 1024};
+
 // ================================================
 // ================================================
 static void BM_GlobalMem(benchmark::State &state) {
@@ -14,6 +18,8 @@ static void BM_GlobalMem(benchmark::State &state) {
   state.counters.insert({
       {"n1", n1},
       {"n2", n2},
+      {"w1", 1},
+      {"w2", W},
   });
 
   /* Data setup */
@@ -43,13 +49,24 @@ static void BM_GlobalMem(benchmark::State &state) {
 
   sycl::free(buffer, q);
   sycl::free(scratch, q);
-} // end BM_LocalMem
+} // end BM_GlobalMem
+
+// ================================================
+BENCHMARK(BM_GlobalMem)
+    ->ArgsProduct({
+        N1_RANGE, /*n1*/
+        N2_RANGE, /*n2*/
+    })
+    ->UseRealTime()
+    ->Unit(benchmark::kMillisecond);
 
 // ================================================
 // ================================================
 static void BM_LocalMem(benchmark::State &state) {
   sycl::queue q;
   Params params(state.range(0), state.range(1));
+  auto w1 = state.range(2);
+  auto w2 = W/w1;
 
   auto n1 = params.n1_;
   auto n2 = params.n2_;
@@ -58,6 +75,8 @@ static void BM_LocalMem(benchmark::State &state) {
   state.counters.insert({
       {"n1", n1},
       {"n2", n2},
+      {"w1", w1},
+      {"w2", w2},
   });
 
   /* Data setup */
@@ -67,7 +86,7 @@ static void BM_LocalMem(benchmark::State &state) {
   /* Benchmark */
   for (auto _ : state) {
     try {
-      solveLocal(q, buffer, params).wait();
+      solveLocal(q, buffer, params, w1, w2).wait();
     } catch (const sycl::exception &e) {
       state.SkipWithError(e.what());
       break;
@@ -90,8 +109,9 @@ static void BM_LocalMem(benchmark::State &state) {
 // ================================================
 BENCHMARK(BM_LocalMem)
     ->ArgsProduct({
-        {4096, 8192}, /*n1*/
-        {128},        /*n2*/
+        N1_RANGE, /*n1*/
+        N2_RANGE, /*n2*/
+        {1, 2, 4, 8, 16},          /*w1*/
     })
     ->UseRealTime()
     ->Unit(benchmark::kMillisecond);
