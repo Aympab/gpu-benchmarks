@@ -53,16 +53,20 @@ inline real_t validate(sycl::queue &q, real_t *buffer, Params &p) {
   const sycl::nd_range ndr(global_size, local_size);
 
   real_t errorL1 = 0.0;
+  
+  {
   sycl::buffer<real_t> errorL1_buff(&errorL1, 1);
+
+
 
   q.submit([&](sycl::handler &cgh) {
      sycl::accessor errorL1_acc(errorL1_buff, cgh, sycl::read_write);
      auto errorL1_reduc = sycl::reduction(errorL1_acc, sycl::plus<real_t>());
-     cgh.parallel_for(ndr, errorL1_reduc, [=](auto itm, auto &err) {
+     cgh.parallel_for(global_size, errorL1_reduc, [=](auto itm, auto &err) {
        mdspan2d_t data(buffer, n1, n2);
 
-       auto i = itm.get_global_id(0);
-       auto j = itm.get_global_id(1);
+       auto i = itm[0];
+       auto j = itm[1];
 
        auto value = data(i, j);
        auto expected = sycl::sin(static_cast<real_t>(i + j));
@@ -70,7 +74,7 @@ inline real_t validate(sycl::queue &q, real_t *buffer, Params &p) {
        err += sycl::fabs(value - expected);
      });
    }).wait(); // end q.submit
-
+  }
   return errorL1;
 }
 

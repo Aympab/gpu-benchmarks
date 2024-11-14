@@ -96,6 +96,7 @@ static void BM_LocalMem(benchmark::State &state) {
   }
 
   auto err = validate(q, buffer, params);
+
   validate_bench(err, state);
 
   auto nIter = state.iterations();
@@ -104,6 +105,7 @@ static void BM_LocalMem(benchmark::State &state) {
   state.SetBytesProcessed(nIter * n1 * n2 * sizeof(real_t));
   state.counters.insert({{"nIter", nIter}});
   state.counters.insert({{"err", err}});
+
 
   sycl::free(buffer, q);
   q.wait();
