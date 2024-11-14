@@ -12,7 +12,7 @@ ACPP_COMPILER="acpp"
 CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 
 usage() {
-    echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
+    echo "Simple compilation script. Automatically builds the project for a specified hw"
     echo "For multiple devices compilation flows, please compile manually."
     echo "Usage: $0 [--hw <mi250|a100|cpu>] [--benchmark_BUILD=<directory>]"
     echo "Compilers must be present in PATH:"
@@ -21,8 +21,16 @@ usage() {
 }
 
 #If no argument, build google benchmark directly and build the project after
-#if [[ $# -eq 0 ]]
-#fi
+if [[ $# -eq 2 ]]; then
+    cd tpls/benchmark
+    mkdir build
+    cd build
+    cmake .. -DBENCHMARK_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
+    make -j 16
+    BENCHMARK_DIR=`pwd`
+
+    cd ../../..
+fi
 
 # =================================================
 # Argument parsing
