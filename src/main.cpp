@@ -1,5 +1,4 @@
 #include "func.hpp"
-#include <hipSYCL/sycl/usm.hpp>
 
 using bm_vec_t = std::vector<int64_t>;
 static bm_vec_t N1_RANGE = {1024, 2048, 4096};
@@ -50,6 +49,7 @@ static void BM_GlobalMem(benchmark::State &state) {
 
   sycl::free(buffer, q);
   sycl::free(scratch, q);
+  q.wait();
 } // end BM_GlobalMem
 
 // ================================================
@@ -106,6 +106,7 @@ static void BM_LocalMem(benchmark::State &state) {
   state.counters.insert({{"err", err}});
 
   sycl::free(buffer, q);
+  q.wait();
 } // end BM_LocalMem
 
 // ================================================
