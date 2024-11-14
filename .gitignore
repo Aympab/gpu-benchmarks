@@ -1,5 +1,6 @@
 [Bb]uild*
 compile_commands.json
+.cache
 
 # Prerequisites
 *.d
