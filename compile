@@ -1,0 +1,109 @@
+#!/bin/bash
+
+# =================================================
+# compile
+# =================================================
+HARDWARE=""
+SYCL_IMPL=""
+BENCHMARK_DIR=""
+
+ACPP_COMPILER="acpp"
+
+CMAKE_OPTIONS+=" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+
+usage() {
+    echo "Simple compilation script. Automatically builds the project for a combination (hw, sycl)."
+    echo "For multiple devices compilation flows, please compile manually."
+    echo "Usage: $0 [--hw <mi250|a100|cpu>] [--benchmark_BUILD=<directory>]"
+    echo "Compilers must be present in PATH:"
+    echo "           acpp       : ${ACPP_COMPILER}"
+    exit 1
+}
+
+# =================================================
+# Argument parsing
+# =================================================
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --hw)
+            HARDWARE="$2"
+            shift 2
+            ;;
+        --benchmark_BUILD=*)
+            BENCHMARK_DIR="${1#*=}"
+            shift 1
+            ;;
+        *)
+            usage  # Handle unknown options
+            ;;
+    esac
+done
+
+ERR_SYCL_UNKNOWN="### Error: Unsupported SYCL implementation specified."
+ERR_HW_UNKNOWN="### Error: Unsupported hardware architecture specified."
+
+# =================================================
+# Set right CXX compiler (must be in PATH)
+# =================================================
+CMAKE_OPTIONS+=" -DCMAKE_CXX_COMPILER=${ACPP_COMPILER}"
+
+# =================================================
+# Set CMake options based on hardware and compiler
+# =================================================
+if [ "$HARDWARE" == "mi250" ]; then
+    export ACPP_TARGETS="hip:gfx90a"
+elif [ "$HARDWARE" == "a100" ]; then
+    export ACPP_TARGETS="cuda:sm_80"
+elif [ "$HARDWARE" == "cpu" ]; then
+    export ACPP_TARGETS="omp"
+else
+    echo $ERR_HW_UNKNOWN
+    usage
+fi
+
+# Add benchmark directory option if specified
+if [ -n "$BENCHMARK_DIR" ]; then 
+    CMAKE_OPTIONS+=" -DCMAKE_PREFIX_PATH=${BENCHMARK_DIR}" 
+fi
+
+# =================================================
+# Configure
+# =================================================
+BUILD_DIR=build_${HARDWARE}
+
+# Check if the build directory exists
+if [ -d "${BUILD_DIR}" ]; then
+    echo "### Removing existing build directory: ${BUILD_DIR}"
+    rm -r "${BUILD_DIR}"
+fi
+
+mkdir ${BUILD_DIR}
+cd ${BUILD_DIR}
+
+echo "### Configuring project..."
+cmake $CMAKE_OPTIONS ..
+
+# Check the exit status of the CMake configuration
+if [ $? -ne 0 ]; then
+    echo "### Error: CMake configuration failed. Deleting the build directory."
+    rm -r "$BUILD_DIR"
+    exit 1
+fi
+echo "### CMake configuration complete in `pwd`."
+echo "# CMake options: ${CMAKE_OPTIONS}"
+echo ""
+
+# =================================================
+# Build
+# =================================================
+echo "### Building project..."
+cmake --build . --parallel 16
+
+# Check the exit status of the build
+if [ $? -ne 0 ]; then
+    echo "### Error: Build failed."
+    exit 1
+fi
+
+echo "### Build complete in `pwd`."
+echo ""

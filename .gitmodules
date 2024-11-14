@@ -1,0 +1,6 @@
+[submodule "benchmark"]
+	path = tlps/benchmark
+	url = https://github.com/google/benchmark.git
+[submodule "tpls/mdspan"]
+	path = tpls/mdspan
+	url = https://github.com/kokkos/mdspan.git
