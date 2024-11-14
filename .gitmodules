@@ -1,4 +1,4 @@
-[submodule "benchmark"]
+[submodule "tpls/benchmark"]
 	path = tlps/benchmark
 	url = https://github.com/google/benchmark.git
 [submodule "tpls/mdspan"]
